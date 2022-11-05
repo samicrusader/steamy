@@ -18,8 +18,8 @@ def sign_message_rsa(key, message: bytes):
     sha1 = hashlib.sha1()
     sha1.update(message)
     message_hash = sha1.digest()
-    digest = b'\x00\x01' + (b'\xff' * int((key.public_key().size_in_bits()) / 8 - 38)) + b'\x000!0\t\x06\x05+\x0e\x03\x02\x1a\x05\x00\x04\x14' + message_hash
-
+    digest = b'\x00\x01' + (b'\xff' * int((key.public_key().size_in_bits()) / 8 - 38)) + \
+             b'\x000!0\t\x06\x05+\x0e\x03\x02\x1a\x05\x00\x04\x14' + message_hash
     pt_int = int.from_bytes(digest, 'big')
     ct_int = pow(pt_int, key.public_key().e, key.public_key().n)
     signature = ct_int.to_bytes(key.public_key().size_in_bytes(), 'big')
@@ -28,4 +28,3 @@ def sign_message_rsa(key, message: bytes):
     if len(signature) != 256:
         signature = signature.rjust(int((key.public_key().size_in_bits()) / 8), b'\x00')
     return signature
-
