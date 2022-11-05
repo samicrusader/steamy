@@ -15,7 +15,6 @@ class ConfigServerHandler(socketserver.StreamRequestHandler):
     def handle(self):
         self.logger.debug('handle')
 
-        # Echo the back to the client
         version = int.from_bytes(self.request.recv(4), 'big')
         if version not in [2, 3]:
             self.logger.debug(f'Version {version} is not supported.')

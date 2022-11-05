@@ -14,7 +14,6 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
         self.logger.debug('handle')
         ip = socket.inet_aton('10.0.2.174')
 
-        # Echo the back to the client
         version = int.from_bytes(self.request.recv(4), 'big')
         if version not in [1, 2]:
             self.logger.debug(f'Version {version} is not supported.')
