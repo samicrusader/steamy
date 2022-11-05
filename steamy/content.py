@@ -52,10 +52,6 @@ class ContentServerHandler(socketserver.StreamRequestHandler):
                 elif command == 3:  # Exit package mode
                     self.logger.info('Exiting package mode...')
                     return
-        elif command == 0:
-            self.logger.warning('Client entered ?? mode.')
-            self.request.send(b'\x00')
-            return
         else:
             self.logger.info(f'Unknown command {command}')
             resp = b'\x00\x00'
