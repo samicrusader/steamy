@@ -3,6 +3,7 @@ import threading
 from steamy.directory import run as DirectoryServer
 from steamy.config import run as ConfigServer
 from steamy.content_list import run as ContentListServer
+from steamy.content import run as ContentServer
 
 # This is a sample Python script.
 
@@ -25,6 +26,8 @@ logging.basicConfig(level=logging.DEBUG)
 t1 = threading.Thread(target=DirectoryServer, args=('0.0.0.0', 27038))
 t2 = threading.Thread(target=ConfigServer, args=('0.0.0.0', 27035))
 t3 = threading.Thread(target=ContentListServer, args=('0.0.0.0', 27037))
+t4 = threading.Thread(target=ContentServer, args=('0.0.0.0', 27032))
 t1.start()
 t2.start()
 t3.start()
+t4.start()
