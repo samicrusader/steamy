@@ -23,8 +23,6 @@ def sign_message_rsa(key, message: bytes):
     pt_int = int.from_bytes(digest, 'big')
     ct_int = pow(pt_int, key.public_key().e, key.public_key().n)
     signature = ct_int.to_bytes(key.public_key().size_in_bytes(), 'big')
-    print(signature)
-    print(len(signature))
     if len(signature) != 256:
         signature = signature.rjust(int((key.public_key().size_in_bits()) / 8), b'\x00')
     return signature
