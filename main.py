@@ -1,6 +1,7 @@
 import logging
-
-from steamy.directory import run
+import threading
+from steamy.directory import run as DirectoryServer
+from steamy.config import run as ConfigServer
 
 # This is a sample Python script.
 
@@ -20,4 +21,7 @@ if __name__ == '__main__':
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
 logging.basicConfig(level=logging.DEBUG)
-run('0.0.0.0', 27038)
+t1 = threading.Thread(target=DirectoryServer, args=('0.0.0.0', 27038))
+t2 = threading.Thread(target=ConfigServer, args=('0.0.0.0', 27035))
+t1.start()
+t2.start()
