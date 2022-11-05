@@ -29,15 +29,15 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
         port = None
         if command == 0 or command == 11:  # Send auth server
             if version == 1:
-                self.logger.debug('Sending auth server...')
+                self.logger.info('Sending auth server...')
             elif version == 2:
-                self.logger.debug(f'Sending auth server for user {command}...')
+                self.logger.info(f'Sending auth server for user {command}...')
             port = int.to_bytes(27039, 2, 'little')
         elif command == 3:  # Send config server
-            self.logger.debug('Sending config server...')
+            self.logger.info('Sending config server...')
             port = int.to_bytes(27035, 2, 'little')
         elif command == 6:  # Send content list server
-            self.logger.debug('Sending content list server...')
+            self.logger.info('Sending content list server...')
             port = int.to_bytes(27037, 2, 'little')
         elif command == 15 or command == 24 or command == 30:  # Send (Gold)Source & RKDF master servers
             """
@@ -45,30 +45,29 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
             Could it be Rag Doll Kung Fu? It did release from 2005, and is the first non-Valve Steam game.
             https://store.steampowered.com/app/1002/Rag_Doll_Kung_Fu/
             """
-            self.logger.debug('Sending game master servers...')
+            self.logger.info('Sending game master servers...')
             port = int.to_bytes(27010, 2, 'little')
         elif command == 18:  # Send account retrieval server
-            self.logger.debug('Sending account retrieval server...')
+            self.logger.info('Sending account retrieval server...')
             port = int.to_bytes(6969, 2, 'little')  # A shot in the dark to get MAYBE an implementation going
         elif command == 20:  # Send game statistic (CSER) server
             """
-            https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/game/shared/gamestats.h
-            and
+            https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/game/shared/gamestats.h and
             https://developer.valvesoftware.com/wiki/Command_Line_Options:# Command-Line Parameters
             ...
             -localcser	Sets a custom gamestats CSER other than the Steam-provided public one (default is
             steambeta1:27013)
             ...
             """
-            self.logger.debug('Sending CSER server...')
+            self.logger.info('Sending CSER server...')
             port = int.to_bytes(27037, 2, 'little')
         elif command == 28 and version == 2:  # Send content server
-            self.logger.debug('Sending content server...')
+            self.logger.info('Sending content server...')
             if message != b'\x1c\x60\x0f\x2d\x40':  # The fuck?
-                self.logger.info(f'Content server message isnt the usual: {message}')
+                self.logger.error(f'Content server message isnt the usual: {message}')
             port = int.to_bytes(27037, 2, 'little')  # Just send it anyways...
         else:
-            self.logger.debug(f'Unknown command {command}')
+            self.logger.info(f'Unknown command {command}')
         if port:
             resp = b'\x00\x01' + ip + port
         else:
@@ -88,7 +87,7 @@ class DirectoryServer(socketserver.ThreadingTCPServer):
         return socketserver.ThreadingTCPServer.serve_forever(self)
 
     def server_close(self):
-        self.logger.info('stopping server...')
+        self.logger.info('Stopping server...')
         return socketserver.ThreadingTCPServer.server_close(self)
 
     def process_request(self, request, client_address):
