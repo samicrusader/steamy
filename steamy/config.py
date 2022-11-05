@@ -24,7 +24,6 @@ class ConfigServerHandler(socketserver.StreamRequestHandler):
         command = int.from_bytes(self.request.recv(1), 'big')
         if length != 1:
             message = self.request.recv((length - 1))
-            print('message:', message)
         self.logger.debug(f'Client sent a version {version} command.')
         resp = '\x00\x00'
         if command == 1:  # Send PDR (Primary Description Record?), otherwise known as the first blob

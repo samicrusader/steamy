@@ -23,13 +23,15 @@ class ContentServerHandler(socketserver.StreamRequestHandler):
                 length = int.from_bytes(self.request.recv(4), 'big')
                 if not length:
                     return
-                command = int.from_bytes(self.request.recv(1), 'big')
+                command = int.from_bytes(self.request.recv(4), 'big')
                 message = None
                 if length != 1:
                     message = self.request.recv((length - 1))
                 if command == 0:  # gimme data
-                    l = int.from_bytes(message[:11], 'big')
-                    package_name = message[11:(11+l)].decode()
+                    l = int.from_bytes(message[:8], 'big')
+                    if l == bytes():
+                        return
+                    package_name = message[8:(8+l)].decode()
                     file_name = package_name
                     if package_name.endswith('_rsa_signature'):
                         signature_file_name = package_name
