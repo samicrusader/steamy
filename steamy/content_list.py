@@ -25,8 +25,11 @@ class ContentListHandler(socketserver.StreamRequestHandler):
         if length != 1:
             message = self.request.recv((length - 1))
         self.logger.debug(f'Client sent a version {version} command.')
-        if command == 0:  # Send file servers that holds packages
-            print(message)
+        if command == 0 or command == 3:  # Send file servers that holds packages
+            """
+            command 3 doesn't have a message, maybe it's asking for ALL content servers?
+            Doesn't matter currently.
+            """
             resp = b'\x00\x01\x00\x00\x00\x00' + ip + int.to_bytes(27032, 2, 'little') + ip +\
                    int.to_bytes(27032, 2, 'little')
             self.request.send(len(resp).to_bytes(4, 'big') + resp)
