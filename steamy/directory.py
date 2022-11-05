@@ -59,12 +59,12 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
             ...
             """
             self.logger.info('Sending CSER server...')
-            port = int.to_bytes(27037, 2, 'little')
+            port = int.to_bytes(27013, 2, 'little')
         elif command == 28 and version == 2:  # Send content server
             self.logger.info('Sending content server...')
             if message != b'\x1c\x60\x0f\x2d\x40':  # The fuck?
                 self.logger.error(f'Content server message isnt the usual: {message}')
-            port = int.to_bytes(27037, 2, 'little')  # Just send it anyways...
+            port = int.to_bytes(27032, 2, 'little')  # Just send it anyways...
         else:
             self.logger.info(f'Unknown command {command}')
         if port:
