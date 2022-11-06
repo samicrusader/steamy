@@ -28,7 +28,7 @@ class Package:
 
     def parse_files(self):
         if self.files_total == 0:
-            raise
+            raise ValueError('No files are in this package')
         i = len(self.pkg) - 25
         for _ in range(self.files_total):
             header = self.pkg[i:i + 16]
