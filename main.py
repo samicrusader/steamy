@@ -1,9 +1,12 @@
 import logging
 import threading
+import shutil
+import os
 from steamy.directory import run as DirectoryServer
 from steamy.config import run as ConfigServer
 from steamy.content_list import run as ContentListServer
 from steamy.content import run as ContentServer
+from steamy.storage import Package
 
 # This is a sample Python script.
 
@@ -21,6 +24,19 @@ if __name__ == '__main__':
     print_hi('PyCharm')
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+# Get SteamNew.exe
+try:
+    shutil.rmtree('./client')
+except:
+    pass
+os.mkdir('./client')
+p = Package('Steam_55.pkg')
+exe = p.extract_file('SteamNew.exe')
+fh = open('./client/Steam.exe', 'wb')
+fh.write(exe)
+fh.close()
+del exe
 
 logging.basicConfig(level=logging.DEBUG)
 t1 = threading.Thread(target=DirectoryServer, args=('0.0.0.0', 27038))

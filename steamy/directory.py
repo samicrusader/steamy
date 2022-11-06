@@ -31,7 +31,7 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
                 self.logger.info('Sending auth server...')
             elif version == 2:
                 self.logger.info(f'Sending auth server for user {command}...')
-            port = int.to_bytes(27039, 2, 'little')
+            port = int.to_bytes(27038, 2, 'little')
         elif command == 3:  # Send config server
             self.logger.info('Sending config server...')
             port = int.to_bytes(27035, 2, 'little')

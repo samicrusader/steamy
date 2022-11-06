@@ -18,6 +18,7 @@ class Package:
         else:
             raise ValueError('Invalid package data (should be file path or bytes)')
         self.parse_footer()
+        self.parse_files()
 
     def parse_footer(self):
         footer = self.pkg[-9:]
