@@ -8,6 +8,7 @@ from steamy.content_list import run as ContentListServer
 from steamy.content import run as ContentServer
 from steamy.storage import Package
 from steamy.utils import replace
+from steamy.description_records import DescriptionRecord
 
 # This is a sample Python script.
 
@@ -32,7 +33,9 @@ try:
 except:
     pass
 os.mkdir('./client')
-p = Package('Steam_55.pkg')
+client_version = int.from_bytes(DescriptionRecord('pdr.bin').data[b'\x01\x00\x00\x00'], 'little')
+print(f'Steam_{client_version}.pkg')
+p = Package(f'Steam_{client_version}.pkg')
 exe = p.extract_file('SteamNew.exe')
 exe = replace(exe)
 fh = open('./client/Steam.exe', 'wb')

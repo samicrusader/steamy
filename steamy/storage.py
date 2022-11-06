@@ -1,6 +1,7 @@
 from typing import Union
 from zlib import compress, decompress
 
+
 class Package:
     compression = 0
     files = dict()

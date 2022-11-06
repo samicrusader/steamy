@@ -1,5 +1,4 @@
 from io import BytesIO
-from mmap import mmap
 
 ip = '10.0.2.174'
 search_list = {
