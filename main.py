@@ -7,6 +7,7 @@ from steamy.config import run as ConfigServer
 from steamy.content_list import run as ContentListServer
 from steamy.content import run as ContentServer
 from steamy.storage import Package
+from steamy.utils import replace
 
 # This is a sample Python script.
 
@@ -33,6 +34,7 @@ except:
 os.mkdir('./client')
 p = Package('Steam_55.pkg')
 exe = p.extract_file('SteamNew.exe')
+exe = replace(exe)
 fh = open('./client/Steam.exe', 'wb')
 fh.write(exe)
 fh.close()
