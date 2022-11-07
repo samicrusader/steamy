@@ -12,18 +12,15 @@ class ContentListHandler(socketserver.StreamRequestHandler):
 
     def handle(self):
         self.logger.debug('handle')
-        ip = socket.inet_aton('10.0.2.174')
+        ip = socket.inet_aton('10.0.2.69')
 
         version = int.from_bytes(self.request.recv(4), 'big')
         if version not in [2]:
             self.logger.debug(f'Version {version} is not supported.')
             return
         self.request.send(b'\x01')  # acknowledge connection
-        length = int.from_bytes(self.request.recv(4), 'big')
+        int.from_bytes(self.request.recv(4), 'big')
         command = int.from_bytes(self.request.recv(1), 'big')
-        message = None
-        if length != 1:
-            message = self.request.recv((length - 1))
         self.logger.debug(f'Client sent a version {version} command.')
         if command == 0 or command == 3:  # Send file servers that holds packages
             """

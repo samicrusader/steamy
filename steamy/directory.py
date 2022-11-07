@@ -12,7 +12,7 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
 
     def handle(self):
         self.logger.debug('handle')
-        ip = socket.inet_aton('10.0.2.174')
+        ip = socket.inet_aton('10.0.2.69')
 
         version = int.from_bytes(self.request.recv(4), 'big')
         if version not in [1, 2]:
@@ -22,7 +22,7 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
         length = int.from_bytes(self.request.recv(4), 'big')
         command = int.from_bytes(self.request.recv(1), 'big')
         if length != 1:
-            message = self.request.recv((length - 1))
+            message = self.request.recv(length)
             print('message:', message)
         self.logger.debug(f'Client sent a version {version} command.')
         port = None
@@ -31,7 +31,7 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
                 self.logger.info('Sending auth server...')
             elif version == 2:
                 self.logger.info(f'Sending auth server for user {command}...')
-            port = int.to_bytes(27038, 2, 'little')
+            port = int.to_bytes(27039, 2, 'little')
         elif command == 3:  # Send config server
             self.logger.info('Sending config server...')
             port = int.to_bytes(27035, 2, 'little')
@@ -70,7 +70,7 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
         if port:
             resp = b'\x00\x01' + ip + port
         else:
-            resp = self.request.send(b'\x00\x00')
+            b'\x00\x00'
         self.request.send(len(resp).to_bytes(4, 'big') + resp)
         return
 

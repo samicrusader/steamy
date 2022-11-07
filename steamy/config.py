@@ -20,10 +20,8 @@ class ConfigServerHandler(socketserver.StreamRequestHandler):
             self.logger.debug(f'Version {version} is not supported.')
             return
         self.request.send(b'\x01' + socket.inet_aton(self.client_address[0]))  # acknowledge connection
-        length = int.from_bytes(self.request.recv(4), 'big')
+        int.from_bytes(self.request.recv(4), 'big')
         command = int.from_bytes(self.request.recv(1), 'big')
-        if length != 1:
-            message = self.request.recv((length - 1))
         self.logger.debug(f'Client sent a version {version} command.')
         resp = '\x00\x00'
         if command == 1:  # Send PDR (Primary Description Record?), otherwise known as the first blob

@@ -15,7 +15,6 @@ class ContentServerHandler(socketserver.StreamRequestHandler):
 
     def handle(self):
         self.logger.debug('handle')
-        ip = socket.inet_aton('10.0.2.174')
 
         command = int.from_bytes(self.request.recv(4), 'big')
         self.request.send(b'\x01')  # acknowledge connection
@@ -28,7 +27,7 @@ class ContentServerHandler(socketserver.StreamRequestHandler):
                 command = int.from_bytes(self.request.recv(4), 'big')
                 message = None
                 if length != 1:
-                    message = self.request.recv((length - 1))
+                    message = self.request.recv(length)
                 if command == 0:  # gimme data
                     package_length = int.from_bytes(message[:8], 'big')
                     if package_length == bytes():
