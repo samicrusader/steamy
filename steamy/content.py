@@ -40,11 +40,11 @@ class ContentServerHandler(socketserver.StreamRequestHandler):
                     self.logger.debug(f'Opening package {file_name}...')
                     pkg = Package(file_name)
                     pkg.unpack()
-                    self.logger.debug(f'Modifying package {package_name}')
-                    for file_name, content in pkg.files.items():
-                        if file_name.endswith('.dll') or file_name.endswith('.exe'):
+                    self.logger.debug(f'Modifying package {file_name}')
+                    for package_file_name, content in pkg.files.items():
+                        if package_file_name.endswith('.dll') or package_file_name.endswith('.exe'):
                             file = strip_file(content['data'])
-                            pkg.pack_file(file_name, file)
+                            pkg.pack_file(package_file_name, file)
                             del file
                     pkg.pack()
                     if not package_name.endswith('_rsa_signature'):
