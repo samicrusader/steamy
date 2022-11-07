@@ -3,13 +3,12 @@ from zlib import compress, decompress
 
 
 class Package:
-    compression = 0
-    files = dict()
-    files_total = 0
-    pkg = None
-    version = 0
-
     def __init__(self, data: Union[bytes, str]):
+        self.compression = 0
+        self.files = dict()
+        self.files_total = 0
+        self.pkg = None
+        self.version = 0
         if type(data) == str:
             fh = open(data, 'rb')
             self.pkg = fh.read()
@@ -29,7 +28,7 @@ class Package:
 
     def parse_files(self):
         if self.files_total == 0:
-            raise ValueError('No files are in this package')
+            raise IOError('No files are in this package')
         i = len(self.pkg) - 25
         for _ in range(self.files_total):
             header = self.pkg[i:i + 16]
@@ -45,10 +44,10 @@ class Package:
                 'start': start,
             }})
 
-    def extract_file(self, file_name: str):
+    def extract_chunks(self, file_name: str):
         if file_name not in self.files.keys():
-            raise ValueError('File is not in package')
-        file = bytes()
+            raise IOError('File is not in package')
+        file = list()
         file_description = self.files[file_name]
         size = file_description['packed_size']
         start = file_description['start']
@@ -56,12 +55,74 @@ class Package:
             compressed_len = int.from_bytes(self.pkg[start:start + 4], 'little')
             compressed_start = start + 4
             compressed_end = compressed_start + compressed_len
-            file += decompress(self.pkg[compressed_start:compressed_end])
+            file.append(self.pkg[compressed_start:compressed_end])
             start = compressed_end
             size -= compressed_len
-        if len(file) != file_description['unpacked_size']:
-            raise IOError('File length does not match size in package')
         return file
+
+    def unpack_chunks(self, file_name: str):
+        if file_name not in self.files.keys():
+            raise IOError('File is not in package')
+        if 'chunks' not in self.files[file_name].keys():
+            raise IOError('File is not unpacked from archive')
+        file = bytes()
+        for chunk in self.files[file_name]['chunks']:
+            file += decompress(chunk)
+        return file
+
+    def extract_file(self, file_name: str):
+        self.files[file_name]['chunks'] = self.extract_chunks(file_name)
+        self.files[file_name]['data'] = self.unpack_chunks(file_name)
+        return self.files[file_name]['data']
+
+    def unpack(self):
+        for file in self.files.keys():
+            self.extract_file(file)
+
+    def pack_chunks(self, file_name: str, new_file: bytes):
+        file = list()
+        for i in range(0, len(new_file), 32768):
+            file.append(compress(new_file[i:(i + 32768)], self.compression))
+        self.files[file_name]['chunks'] = file
+
+    def pack_file(self, file_name: str, new_file: bytes):
+        if file_name not in self.files.keys():
+            self.files.update({file_name: {}})
+        self.pack_chunks(file_name, new_file)
+        self.files[file_name]['data'] = new_file
+        self.files[file_name]['unpacked_size'] = len(new_file)
+        self.files[file_name]['packed_size'] = -1
+        self.files[file_name]['start'] = -1
+
+    def pack(self):
+        self.files_total = len(self.files.keys())
+        data = list()
+        data_length = 0
+        index = list()
+        for file_name in self.files.keys():
+            packed = 0
+            offset = data_length
+            for chunk in self.files[file_name]['chunks']:
+                chunk = len(chunk).to_bytes(4, 'little') + chunk
+                data.append(chunk)
+                data_length += len(chunk)
+                packed += len(chunk) - 4
+            self.files[file_name]['packed_size'] = packed
+            self.files[file_name]['start'] = offset
+            header = file_name.encode() + b'\x00' + \
+                self.files[file_name]['unpacked_size'].to_bytes(4, 'little') + \
+                self.files[file_name]['packed_size'].to_bytes(4, 'little') + \
+                self.files[file_name]['start'].to_bytes(4, 'little') + \
+                (len(file_name) + 1).to_bytes(4, 'little')
+            index.insert(0, header)
+        self.pkg = b''.join(data) + b''.join(index) + self.version.to_bytes(1, 'little') + \
+            self.compression.to_bytes(4, 'little') + self.files_total.to_bytes(4, 'little')
+        self.save_pkg('loldongs.pkg')
+
+    def save_pkg(self, file_name: str):
+        fh = open(file_name, 'wb')
+        fh.write(self.pkg)
+        fh.close()
 
 
 class Storage:

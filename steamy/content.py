@@ -2,6 +2,8 @@ import socket
 import socketserver
 import logging
 from . import cryptography
+from .storage import Package
+from .utils import replace as strip_file
 
 
 class ContentServerHandler(socketserver.StreamRequestHandler):
@@ -28,24 +30,31 @@ class ContentServerHandler(socketserver.StreamRequestHandler):
                 if length != 1:
                     message = self.request.recv((length - 1))
                 if command == 0:  # gimme data
-                    l = int.from_bytes(message[:8], 'big')
-                    if l == bytes():
+                    package_length = int.from_bytes(message[:8], 'big')
+                    if package_length == bytes():
                         return
-                    package_name = message[8:(8+l)].decode()
+                    package_name = message[8:(8+package_length)].decode()
                     file_name = package_name
                     if package_name.endswith('_rsa_signature'):
-                        signature_file_name = package_name
                         file_name = package_name.removesuffix('_rsa_signature')
                     self.logger.debug(f'Opening package {file_name}...')
-                    fh = open(file_name, 'rb')
-                    data = fh.read()
-                    fh.close()
+                    pkg = Package(file_name)
+                    pkg.unpack()
+                    self.logger.debug(f'Modifying package {package_name}')
+                    for file_name, content in pkg.files.items():
+                        if file_name.endswith('.dll') or file_name.endswith('.exe'):
+                            file = strip_file(content['data'])
+                            pkg.pack_file(file_name, file)
+                            del file
+                    pkg.pack()
                     if not package_name.endswith('_rsa_signature'):
                         self.logger.info(f'Sending {package_name}...')
+                        data = pkg.pkg
                     else:
                         self.logger.info(f'Sending signature for {file_name}...')
-                        data = cryptography.sign_message_rsa(cryptography.network_key, data)
+                        data = cryptography.sign_message_rsa(cryptography.network_key, pkg.pkg)
                     self.request.send((len(data).to_bytes(4, 'big')) * 2 + data)
+                    del pkg
                 elif command == 2:
                     self.request.send('\x00\x00\x00\x02')  # ??
                     return

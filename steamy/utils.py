@@ -16,15 +16,19 @@ search_list = {
                       '73020111', # Main RSA key
     'gds1.steampowered.com:27030 gds2.steampowered.com:27030': f'{ip}:27030 {ip}:27030', # Content List Servers (?)
     '72.165.61.189:27030 72.165.61.190:27030 69.28.151.178:27038 69.28.153.82:27038 87.248.196.194:27038 '
-    '68.142.72.250:27038': f'{ip}:27030 {ip}:27030 {ip}:27038 {ip}:27038 {ip}:27038 {ip}:27038', # Content List Servers (?) and AuthServer
+    '68.142.72.250:27038': f'{ip}:27030 {ip}:27030 {ip}:27038 {ip}:27038 {ip}:27038 {ip}:27038',  # Content List Servers
+                                                                                                  # and AuthServer
 }
 
 
 def replace(binary: bytes, replace_list: dict=search_list):
     f = BytesIO(binary)  # This is a really cheap hack but effective.
     for search, replace in replace_list.items():
+        if len(replace) > len(search):
+            raise ValueError('Replacement data is bigger than search')
         loc = binary.find(search.encode())
-        f.seek(loc)
-        f.write(replace.encode()+b'\x00')
+        if loc != -1:
+            f.seek(loc)
+            f.write(replace.encode()+b'\x00')
     f.seek(0)
     return f.read()

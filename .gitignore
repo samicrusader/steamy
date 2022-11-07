@@ -159,9 +159,10 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Client data blobs
+# Server-side data
 cdr.bin
 pdr.bin
-
-# Client packages
 *.pkg
+
+# Client
+/client/
