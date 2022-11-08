@@ -56,7 +56,9 @@ class ConfigServerHandler(socketserver.StreamRequestHandler):
             \x02\x01\x11 on the last line.
             """
             self.logger.info('Sending network key...')
-            self.request.send(cryptography.sign_key_with_rsa(cryptography.network_key, cryptography.primary_key))
+            self.request.send(
+                cryptography.sign_key_with_rsa(cryptography.network_key, cryptography.primary_signing_key)
+            )
             return
         elif command == 9:  # ??
             self.logger.info('Sending response for command 9...')

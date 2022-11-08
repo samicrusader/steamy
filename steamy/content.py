@@ -51,7 +51,7 @@ class ContentServerHandler(socketserver.StreamRequestHandler):
                         data = pkg.pkg
                     else:
                         self.logger.info(f'Sending signature for {file_name}...')
-                        data = cryptography.sign_message_rsa(cryptography.network_key, pkg.pkg)
+                        data = cryptography.sign_message_rsa(cryptography.network_signing_key, pkg.pkg)
                     self.request.send((len(data).to_bytes(4, 'big')) * 2 + data)
                     del pkg
                 elif command == 2:
