@@ -1,3 +1,4 @@
+from datetime import datetime
 from io import BytesIO
 
 ip = '10.0.2.69'
@@ -21,7 +22,7 @@ search_list = {
 }
 
 
-def replace(binary: bytes, replace_list: dict=search_list):
+def replace(binary: bytes, replace_list: dict = search_list):
     f = BytesIO(binary)  # This is a really cheap hack but effective.
     for search, replace in replace_list.items():
         if len(replace) > len(search):
@@ -32,3 +33,17 @@ def replace(binary: bytes, replace_list: dict=search_list):
             f.write(replace.encode()+b'\x00')
     f.seek(0)
     return f.read()
+
+
+def valve_time(dt: datetime = datetime.now()):
+    """
+    See https://developer.valvesoftware.com/wiki/Valve_Time for the joke.
+
+    Converts a datetime.datetime object to a valid timestamp that the Steam client likes.
+
+    :param dt: datetime.datetime
+    :return: bytes
+    """
+    epoch = datetime.timestamp(dt)
+    timestamp = int((epoch + 62135596800) * 1000000)
+    return timestamp.to_bytes(8, 'little')
