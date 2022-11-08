@@ -26,7 +26,7 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
             print('message:', message)
         self.logger.debug(f'Client sent a version {version} command.')
         port = None
-        if command == 0 or command == 11:  # Send auth server
+        if command == 0 or command == 11 or command == 18:  # Send auth server
             if version == 1:
                 self.logger.info('Sending auth server...')
             elif version == 2:
@@ -46,9 +46,9 @@ class DirectoryServerHandler(socketserver.StreamRequestHandler):
             """
             self.logger.info('Sending game master servers...')
             port = int.to_bytes(27010, 2, 'little')
-        elif command == 18:  # Send account retrieval server
-            self.logger.info('Sending account retrieval server...')
-            port = int.to_bytes(6969, 2, 'little')  # A shot in the dark to get MAYBE an implementation going
+        #elif command == 18:  # Send account retrieval server
+            #self.logger.info('Sending account retrieval server...')
+            #port = int.to_bytes(6969, 2, 'little')  # A shot in the dark to get MAYBE an implementation going
         elif command == 20:  # Send game statistic (CSER) server
             """
             https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/game/shared/gamestats.h and

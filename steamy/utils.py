@@ -19,6 +19,21 @@ search_list = {
     '72.165.61.189:27030 72.165.61.190:27030 69.28.151.178:27038 69.28.153.82:27038 87.248.196.194:27038 '
     '68.142.72.250:27038': f'{ip}:27030 {ip}:27030 {ip}:27038 {ip}:27038 {ip}:27038 {ip}:27038',  # Content List Servers
                                                                                                   # and AuthServer
+    '207.173.176.215': f'{ip}',
+    '72.165.61.188': f'{ip}',
+    '72.165.61.187': f'{ip}',
+    '72.165.61.186': f'{ip}',
+    '72.165.61.185': f'{ip}',
+    '208.111.133.85': f'{ip}',
+    '208.111.133.84': f'{ip}',
+    '68.142.91.35': f'{ip}',
+    '68.142.91.34': f'{ip}',
+    '208.111.171.83': f'{ip}',
+    '208.111.171.82': f'{ip}',
+    '208.111.158.53': f'{ip}',
+    '208.111.158.52': f'{ip}',
+    '69.28.145.171': f'{ip}',
+    '69.28.145.170': f'{ip}'
 }
 
 
@@ -47,3 +62,28 @@ def valve_time(dt: datetime = datetime.now()):
     epoch = datetime.timestamp(dt)
     timestamp = int((epoch + 62135596800) * 1000000)
     return timestamp.to_bytes(8, 'little')
+
+
+def deserialize(blob: bytes):
+    data = dict()
+    if blob[:2] != b'\x01P':
+        raise ValueError('Data is not a serialized blob')
+    size = int.from_bytes(blob[2:6], 'little')
+    padding_size = int.from_bytes(blob[6:10], 'little')
+    if padding_size:
+        data['__padding__'] = blob[-padding_size:]
+    if (size + padding_size) <= len(blob):
+        blob = blob[:(size + padding_size)]
+    else:
+        raise ValueError(f'Data length ({len(blob)}) does not match length in header ({size + padding_size}).')
+    f = BytesIO(blob[10:])
+    while f.tell() != ((size + padding_size) - 10):
+        name_size = int.from_bytes(f.read(2), 'little')
+        data_size = int.from_bytes(f.read(4), 'little')
+        name = f.read(name_size)
+        blob_data = f.read(data_size).strip(b'\x00')
+        if blob_data[:2] == b'\x01P':
+            data[name] = deserialize(blob_data)
+        else:
+            data[name] = blob_data
+    return data

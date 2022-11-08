@@ -1,7 +1,10 @@
 import socket
 import socketserver
 import logging
-
+from . import cryptography
+from .database import engine, User as DBUser
+from .utils import deserialize, valve_time
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 class AuthServerHandler(socketserver.StreamRequestHandler):
     def __init__(self, request, client_address, server):
@@ -18,20 +21,50 @@ class AuthServerHandler(socketserver.StreamRequestHandler):
         length = int.from_bytes(self.request.recv(4), 'big')
         message = self.request.recv(length)
         command = int.from_bytes(message[:1], 'big')
+        db_session = scoped_session(sessionmaker(bind=engine))
+        if command in [1, 14, 29, 32, 33, 34]:
+            self.request.send(
+                cryptography.sign_key_with_rsa(cryptography.network_key, cryptography.primary_signing_key)
+            )
+            message = self.request.recv(int.from_bytes(self.request.recv(4), 'big'))
+            key = cryptography.get_aes_key(message[2:130], cryptography.network_key)
+            message = message[144:]
+            if not cryptography.check_message(message, key):
+                self.logger.error('AES message check failed')
+                self.request.send(b'\x00')
+                return
+            length = int.from_bytes(message[:4], 'big')
+            message = cryptography.decrypt_aes(message[20:-20], key, message[4:20])[:length]
+            message = deserialize(message)
         if command == 2:  # Normal login
-            username = message[3:(3 + int.from_bytes(message[1:3], 'big'))]
-            print(username)
-            # REMOVE STARTING HERE
-            ul = int.from_bytes(message[1:3], 'big')
-            ul = ul + 5
-            username2 = message[ul:(ul+int.from_bytes(message[(ul-5):ul], 'big'))]
-            if username != username2:
-                self.logger.warning(f'1st username in request {username} does not match {username2}')
-            # REMOVE ENDING HERE
+            user_name = message[3:(3 + int.from_bytes(message[1:3], 'big'))].decode()
+            self.logger.info(f'Logging into {user_name}...')
+            try:
+                user_object = db_session.query(DBUser).filter(DBUser.username == user_name)[0]
+            except IndexError:
+                pass  # Wrong username
+            else:
+                self.logger.debug(f'{user_name} is in the database.')
+            self.request.send(b'\x00\x00\x00\x00\x00\x00\x00\x00')
+            self.request.send(b'\x01' + valve_time() + (b'\x00' * 1222))
+            return
+        elif command == 29:  # Check username
+            username = message[b"\x01\x00\x00\x00"].decode()
+            self.logger.info(f'Client wants to know if username "{username}" is available.')
+            try:
+                db_session.query(DBUser).filter(DBUser.username == username)[0]
+            except IndexError:
+                self.logger.debug(f'"{username}" is available')
+                resp = b'\x01'
+            else:
+                self.logger.debug(f'"{username}" is unavailable')
+                resp = b'\x00'
+        elif command == 34:  # Check email
+            resp = b'\x01'
         else:
             self.logger.info(f'Unknown command {command}')
-        resp = b'\x00\x00'
-        self.request.send(len(resp).to_bytes(4, 'big') + resp)
+            resp = b'\x00'
+        self.request.send(resp)
         return
 
 

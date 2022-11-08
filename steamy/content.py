@@ -42,6 +42,7 @@ class ContentServerHandler(socketserver.StreamRequestHandler):
                     self.logger.debug(f'Modifying package {file_name}')
                     for package_file_name, content in pkg.files.items():
                         if package_file_name.endswith('.dll') or package_file_name.endswith('.exe'):
+                            print(f'Modifying {package_file_name}')
                             file = strip_file(content['data'])
                             pkg.pack_file(package_file_name, file)
                             del file
