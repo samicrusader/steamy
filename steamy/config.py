@@ -23,18 +23,20 @@ class ConfigServerHandler(socketserver.StreamRequestHandler):
         int.from_bytes(self.request.recv(4), 'big')
         command = int.from_bytes(self.request.recv(1), 'big')
         self.logger.debug(f'Client sent a version {version} command.')
-        resp = '\x00\x00'
         if command == 1:  # Send PDR (Primary Description Record?), otherwise known as the first blob
             self.logger.debug('Reading PDR blob...')
             fh = open('pdr.bin', 'rb')
             resp = fh.read()
             fh.close()
             self.logger.info('Sending primary description record...')
+            self.request.send(len(resp).to_bytes(4, 'big') + resp)
         elif command == 2:
             """
             Send CDR (Content Description Record), otherwise known as the second blob.
             The client actually sends us it's own checksum to verify, instead of redownloading it over again on launch.
             """
+            self.logger.debug('Reading client CDR blob hash...')
+            client_hash = self.request.recv(21)
             self.logger.debug('Reading CDR blob...')
             fh = open('cdr.bin', 'rb')
             cdr = fh.read()
@@ -44,12 +46,12 @@ class ConfigServerHandler(socketserver.StreamRequestHandler):
             sha1.update(cdr)
             cdr_hash = sha1.digest()
             self.logger.debug('Comparing hash of CDR blob against client\'s version...')
-            if cdr_hash == version:
+            if cdr_hash == client_hash:
                 self.logger.info('Client has valid content description record.')
-                resp = ''
+                self.request.send(b'\x00\x00\x00\x00')
             else:
                 self.logger.info('Client has invalid or newer content description record, sending new blob...')
-                resp = cdr
+                self.request.send(len(cdr).to_bytes(4, 'big') + cdr)
         elif command == 4:  # Send network key
             """
             First key ends before \xbf on the second line, second key starts at \xbf on the second life, ends before
@@ -59,15 +61,15 @@ class ConfigServerHandler(socketserver.StreamRequestHandler):
             self.request.send(
                 cryptography.sign_key_with_rsa(cryptography.network_key, cryptography.primary_signing_key)
             )
-            return
+        elif command == 7:  # ??
+            self.logger.info('Sending response for command 7...')
+            self.request.send(int(9).to_bytes(4, 'big') + b'\x00\x01\x31\x2d\x00\x00\x00\x01\x2c')
         elif command == 9:  # ??
             self.logger.info('Sending response for command 9...')
-            self.request.send(b'\x00\x00\x00\x01\x31\x2d\x00\x00\x00\x01\x2c')
-            return
+            self.request.send(int(11).to_bytes(4, 'big') + b'\x00\x00\x00\x01\x31\x2d\x00\x00\x00\x01\x2c')
         else:
             self.logger.info(f'Unknown command {command}')
-        self.request.send(len(resp).to_bytes(4, 'big') + resp)
-        return
+            self.request.send(b'\x00\x00')
 
 
 class ConfigServer(socketserver.ThreadingTCPServer):
