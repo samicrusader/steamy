@@ -35,9 +35,16 @@ try:
 except:
     pass
 os.mkdir('./client')
-client_version = int.from_bytes(DescriptionRecord('pdr.bin').data[b'\x01\x00\x00\x00'], 'little')
-print(f'Steam_{client_version}.pkg')
-p = Package(f'Steam_{client_version}.pkg')
+pdr = DescriptionRecord('pdr.bin').data
+client_version = int.from_bytes(pdr[b"\x01\x00\x00\x00"], "little")
+client_version = f'Steam_{client_version}.pkg'
+ui_version = int.from_bytes(pdr[b"\x02\x00\x00\x00"], "little")
+ui_version =  f'SteamUI_{ui_version}.pkg'
+if not os.path.exists(client_version):
+    raise IOError(f'Client package {client_version} missing')
+if not os.path.exists(ui_version):
+    raise IOError(f'Client package {ui_version} missing')
+p = Package(client_version)
 exe = p.extract_file('SteamNew.exe')
 exe = replace(exe)
 fh = open('./client/Steam.exe', 'wb')
