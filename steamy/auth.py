@@ -29,11 +29,11 @@ class AuthServerHandler(socketserver.StreamRequestHandler):
             message = self.request.recv(int.from_bytes(self.request.recv(4), 'big'))
             key = cryptography.get_aes_key(message[2:130], cryptography.network_key)
             message = message[144:]
+            length = int.from_bytes(message[:4], 'big')
             if not cryptography.check_message(message, key):
                 self.logger.error('AES message check failed')
                 self.request.send(b'\x00')
                 return
-            length = int.from_bytes(message[:4], 'big')
             message = cryptography.decrypt_aes(message[20:-20], key, message[4:20])[:length]
             message = deserialize(message)
         if command == 2:  # Normal login
@@ -49,7 +49,7 @@ class AuthServerHandler(socketserver.StreamRequestHandler):
             self.request.send(b'\x01' + valve_time() + (b'\x00' * 1222))
             return
         elif command == 29:  # Check username
-            username = message[b"\x01\x00\x00\x00"].decode()
+            username = message[b"\x01\x00\x00\x00"].decode().strip('\x00')
             self.logger.info(f'Client wants to know if username "{username}" is available.')
             try:
                 db_session.query(DBUser).filter(DBUser.username == username)[0]
@@ -60,7 +60,16 @@ class AuthServerHandler(socketserver.StreamRequestHandler):
                 self.logger.debug(f'"{username}" is unavailable')
                 resp = b'\x00'
         elif command == 34:  # Check email
-            resp = b'\x01'
+            email = message[b"\x01\x00\x00\x00"].decode().strip('\x00')
+            self.logger.info(f'Client wants to know if username "{email}" is available.')
+            try:
+                db_session.query(DBUser).filter(DBUser.email == email)[0]
+            except IndexError:
+                self.logger.debug(f'"{email}" is available')
+                resp = b'\x01'
+            else:
+                self.logger.debug(f'"{email}" is unavailable')
+                resp = b'\x00'
         else:
             self.logger.info(f'Unknown command {command}')
             resp = b'\x00'

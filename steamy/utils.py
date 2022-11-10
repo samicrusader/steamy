@@ -68,18 +68,17 @@ def deserialize(blob: bytes):
     padding_size = int.from_bytes(blob[6:10], 'little')
     if padding_size:
         data['__padding__'] = blob[-padding_size:]
-    if (size + padding_size) <= len(blob):
-        blob = blob[:(size + padding_size)]
-    else:
+    if (size + padding_size) > len(blob):
         raise ValueError(f'Data length ({len(blob)}) does not match length in header ({size + padding_size}).')
     f = BytesIO(blob[10:])
     while f.tell() != ((size + padding_size) - 10):
         name_size = int.from_bytes(f.read(2), 'little')
         data_size = int.from_bytes(f.read(4), 'little')
         name = f.read(name_size)
-        blob_data = f.read(data_size).strip(b'\x00')
+        blob_data = f.read(data_size)
         if blob_data[:2] == b'\x01P':
             data[name] = deserialize(blob_data)
         else:
             data[name] = blob_data
+    print(data)
     return data
