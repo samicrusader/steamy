@@ -10,6 +10,7 @@ from steamy.content import run as ContentServer
 from steamy.storage import Package
 from steamy.utils import replace
 from steamy.description_records import DescriptionRecord
+from steamy.cser import run as CSER
 
 # This is a sample Python script.
 
@@ -50,8 +51,10 @@ t2 = threading.Thread(target=ConfigServer, args=('0.0.0.0', 27035))
 t3 = threading.Thread(target=ContentListServer, args=('0.0.0.0', 27037))
 t4 = threading.Thread(target=ContentServer, args=('0.0.0.0', 27032))
 t5 = threading.Thread(target=AuthServer, args=('0.0.0.0', 27039))
+t6 = threading.Thread(target=CSER, args=('0.0.0.0', 27013))
 t1.start()
 t2.start()
 t3.start()
 t4.start()
 t5.start()
+t6.start()
