@@ -4,6 +4,7 @@ import logging
 from . import cryptography
 from .database import engine, User as DBUser
 from .utils import deserialize, valve_time
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 class AuthServerHandler(socketserver.StreamRequestHandler):
@@ -36,7 +37,29 @@ class AuthServerHandler(socketserver.StreamRequestHandler):
                 return
             message = cryptography.decrypt_aes(message[20:-20], key, message[4:20])[:length]
             message = deserialize(message)
-        if command == 2:  # Normal login
+        if command == 1:  # Registration
+            username = message[b'\x01\x00\x00\x00'].decode().strip('\x00')
+            user = DBUser(
+                username=username,
+                email=message[b'\x0b\x00\x00\x00'].decode().strip('\x00'),
+                disabled=False,
+                key=message[b'\x05\x00\x00\x00'][username.encode()][b'\x01\x00\x00\x00'],
+                salt=message[b'\x05\x00\x00\x00'][username.encode()][b'\x02\x00\x00\x00'],
+                password=message[b'\x05\x00\x00\x00'][username.encode()][b'\x04\x00\x00\x00'],
+                recovery_question=message[b'\x05\x00\x00\x00'][username.encode()][b'\x03\x00\x00\x00'],
+                recovery_answer=message[b'\x05\x00\x00\x00'][username.encode()][b'\x05\x00\x00\x00'],
+                unknown_data=message[b'\x02\x00\x00\x00']
+            )
+            try:
+                db_session.add(user)
+                db_session.commit()
+            except SQLAlchemyError as e:  # TODO: Return specific errors
+                self.logger.error(f'Error while registering user {username}: {e}')
+                resp = b'\x01'
+            else:
+                self.logger.info(f'User {username} registered')
+                resp = b'\x00'
+        elif command == 2:  # Normal login
             user_name = message[3:(3 + int.from_bytes(message[1:3], 'big'))].decode()
             self.logger.info(f'Logging into {user_name}...')
             try:
@@ -49,7 +72,7 @@ class AuthServerHandler(socketserver.StreamRequestHandler):
             self.request.send(b'\x01' + valve_time() + (b'\x00' * 1222))
             return
         elif command == 29:  # Check username
-            username = message[b"\x01\x00\x00\x00"].decode().strip('\x00')
+            username = message[b'\x01\x00\x00\x00'].decode().strip('\x00')
             self.logger.info(f'Client wants to know if username "{username}" is available.')
             try:
                 db_session.query(DBUser).filter(DBUser.username == username)[0]
