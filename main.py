@@ -2,9 +2,11 @@ import logging
 import threading
 import shutil
 import os
+import yaml
 from steamy.auth import run as AuthServer
 from steamy.directory import run as DirectoryServer
 from steamy.config import run as ConfigServer
+from steamy.configparser import Settings
 from steamy.content_list import run as ContentListServer
 from steamy.content import run as ContentServer
 from steamy.storage import Package
@@ -12,22 +14,7 @@ from steamy.utils import replace
 from steamy.description_records import DescriptionRecord
 from steamy.cser import run as CSER
 
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+settings = Settings.parse_obj(yaml.safe_load(open('config.yaml')))
 
 # Get SteamNew.exe
 try:

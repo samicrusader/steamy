@@ -12,7 +12,7 @@ class ContentListHandler(socketserver.StreamRequestHandler):
 
     def handle(self):
         self.logger.debug('handle')
-        ip = socket.inet_aton('10.0.2.69')
+        ip = socket.inet_aton('10.0.2.174')
 
         version = int.from_bytes(self.request.recv(4), 'big')
         if version not in [2]:

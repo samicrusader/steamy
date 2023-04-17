@@ -1,14 +1,18 @@
+import yaml
+from .configparser import Settings
 from sqlalchemy import Boolean, create_engine, Column, Integer, LargeBinary, String
 from sqlalchemy.engine.url import URL as database_uri
 from sqlalchemy.ext.declarative import declarative_base
 
+settings = Settings.parse_obj(yaml.safe_load(open('config.yaml')))
+
 db_uri = database_uri.create(
-    drivername='postgresql+psycopg2',
-    username='samicrusader',
-    password='password',
-    database='steamy',
-    host='127.0.0.1',
-    port=5432
+    drivername=settings.universe.database.driver,
+    username=settings.universe.database.username,
+    password=settings.universe.database.password,
+    database=settings.universe.database.database,
+    host=settings.universe.database.host,
+    port=settings.universe.database.port
 )
 
 engine = create_engine(db_uri)
