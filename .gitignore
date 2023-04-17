@@ -166,3 +166,6 @@ pdr.bin
 
 # Client
 /client/
+
+# Config file
+config.yaml
