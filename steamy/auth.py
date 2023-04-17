@@ -23,7 +23,7 @@ class AuthServerHandler(socketserver.StreamRequestHandler):
         message = self.request.recv(length)
         command = int.from_bytes(message[:1], 'big')
         db_session = scoped_session(sessionmaker(bind=engine))
-        if command in [1, 14, 29, 32, 33, 34]:
+        if command in [1, 14, 29, 30, 32, 33, 34]:
             self.request.send(
                 cryptography.sign_key_with_rsa(cryptography.network_key, cryptography.primary_signing_key)
             )
@@ -71,17 +71,17 @@ class AuthServerHandler(socketserver.StreamRequestHandler):
             self.request.send(b'\x00\x00\x00\x00\x00\x00\x00\x00')
             self.request.send(b'\x01' + valve_time() + (b'\x00' * 1222))
             return
-        elif command == 29:  # Check username
+        elif command == 29 or command == 30:  # Check username
             username = message[b'\x01\x00\x00\x00'].decode().strip('\x00')
             self.logger.info(f'Client wants to know if username "{username}" is available.')
             try:
                 db_session.query(DBUser).filter(DBUser.username == username)[0]
             except IndexError:
                 self.logger.debug(f'"{username}" is available')
-                resp = b'\x01'
+                resp = b'\x00'  # FIXME: This does not work at all.
             else:
                 self.logger.debug(f'"{username}" is unavailable')
-                resp = b'\x00'
+                resp = b'\x01'
         elif command == 34:  # Check email
             email = message[b"\x01\x00\x00\x00"].decode().strip('\x00')
             self.logger.info(f'Client wants to know if username "{email}" is available.')
@@ -89,10 +89,10 @@ class AuthServerHandler(socketserver.StreamRequestHandler):
                 db_session.query(DBUser).filter(DBUser.email == email)[0]
             except IndexError:
                 self.logger.debug(f'"{email}" is available')
-                resp = b'\x01'
+                resp = b'\x00'  # FIXME: This does not work at all.
             else:
                 self.logger.debug(f'"{email}" is unavailable')
-                resp = b'\x00'
+                resp = b'\x01'
         else:
             self.logger.info(f'Unknown command {command}')
             resp = b'\x00'
